@@ -1,0 +1,93 @@
+## Prerequisites
+
+- Docker & Docker Compose (for local Kafka)
+- Python 3.8+ with pip
+- Terminal/Command line
+
+## Step 1: Install Python Dependencies
+
+pip install kafka-python
+
+## Step 2: Start Kafka with Docker Compose
+
+# Start Zookeeper and Kafka containers
+docker-compose up -d
+
+# Verify services are running
+docker-compose ps
+
+# Check logs
+docker-compose logs kafka
+
+Expected output:
+- `zookeeper` running on port 2181
+- `kafka` running on port 9092
+- `kafka-ui` running on port 8080 (optional web interface)
+
+## Step 3: Create the Topic
+
+# Create a topic with 3 partitions
+docker exec kafka-kafka-1 kafka-topics `
+  --create `
+  --topic user-events `
+  --partitions 3 `
+  --replication-factor 1 `	
+  --bootstrap-server localhost:9092
+
+# List all topics
+docker exec kafka-kafka-1 kafka-topics `
+  --list `
+  --bootstrap-server localhost:9092
+
+# Describe the topic
+docker exec kafka-kafka-1 kafka-topics `
+  --describe `
+  --topic user-events `
+  --bootstrap-server localhost:9092
+
+Expected output:
+
+Topic: user-events	PartitionCount: 3	ReplicationFactor: 1
+	Topic: user-events	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
+	Topic: user-events	Partition: 1	Leader: 1	Replicas: 1	Isr: 1
+	Topic: user-events	Partition: 2	Leader: 1	Replicas: 1	Isr: 1
+
+
+## Basic Producer & Consumer
+
+Terminal 1
+python producer_demo.py
+
+Terminal 2
+python consumer_demo.py (python consumer_demo.py --from-beginning)
+
+## Consumer Groups & Scaling
+
+python consumer_group_demo.py consumer-1
+
+python consumer_group_demo.py consumer-2
+
+python consumer_group_demo.py consumer-3
+
+
+
+### Check Group Status
+
+docker exec kafka-kafka-1 kafka-consumer-groups `
+  --bootstrap-server localhost:9092 `
+  --group dashboard-consumer `
+  --describe
+
+Web UI
+http://localhost:8080
+
+### Stop Containers
+
+# Stop without removing volumes
+docker-compose stop
+
+# Stop and remove everything
+docker-compose down
+
+# Remove volumes too
+docker-compose down -v
